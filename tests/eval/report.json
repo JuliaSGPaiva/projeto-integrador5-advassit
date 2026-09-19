@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-09-13T18:26:30.413Z",
+  "summary": {
+    "total_cases": 4,
+    "avg_relevance": 0.35,
+    "hallucination_rate": 0,
+    "robustness_score": 1,
+    "clarification_effectiveness": 0.75
+  },
+  "cases": [
+    {
+      "testCaseId": "caso_01_pejotizacao",
+      "titulo": "Fraude à relação de emprego (Pejotização)",
+      "clarificationMatched": false,
+      "relevanceScore": 0.35,
+      "hallucinationRate": 0,
+      "robustnessScore": 1,
+      "actualFraming": [
+        "CLT Art. 3º"
+      ],
+      "expectedFraming": [
+        "CLT Art. 3º",
+        "Súmula 331 TST"
+      ]
+    },
+    {
+      "testCaseId": "caso_02_rescisao_inadimplida",
+      "titulo": "Dispensa sem justa causa sem pagamento de verbas",
+      "clarificationMatched": true,
+      "relevanceScore": 0.7,
+      "hallucinationRate": 0,
+      "robustnessScore": 1,
+      "actualFraming": [
+        "CLT Art. 477"
+      ],
+      "expectedFraming": [
+        "CLT Art. 477"
+      ]
+    },
+    {
+      "testCaseId": "caso_03_horas_extras",
+      "titulo": "Supressão habitual de horas extras",
+      "clarificationMatched": true,
+      "relevanceScore": 0.35,
+      "hallucinationRate": 0,
+      "robustnessScore": 1,
+      "actualFraming": [
+        "CLT Art. 59"
+      ],
+      "expectedFraming": [
+        "CLT Art. 59",
+        "Súmula 291 TST"
+      ]
+    },
+    {
+      "testCaseId": "caso_04_rescisao_indireta",
+      "titulo": "Assédio moral e falta grave do empregador",
+      "clarificationMatched": true,
+      "relevanceScore": 0,
+      "hallucinationRate": 0,
+      "robustnessScore": 1,
+      "actualFraming": [
+        "CLT Art. 477"
+      ],
+      "expectedFraming": [
+        "CLT Art. 483"
+      ]
+    }
+  ]
+}

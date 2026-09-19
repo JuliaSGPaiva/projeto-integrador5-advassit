@@ -1,0 +1,42 @@
+[
+  {
+    "id": "caso_01_pejotizacao",
+    "titulo": "Fraude à relação de emprego (Pejotização)",
+    "descricao_inicial": "Estou trabalhando como PJ há 1 ano mas na prática atuo exatamente como CLT com horário e ordens diretas.",
+    "espera_perguntas_esclarecimento": true,
+    "respostas_simuladas": [
+      { "order": 1, "text": "Sim, tenho horário fixo de 8h às 18h e bato ponto biométrico." },
+      { "order": 2, "text": "Sim, recebo ordens diretas do gerente operacional e não posso colocar outra pessoa no meu lugar." },
+      { "order": 3, "text": "Sim, trabalho com exclusividade total para essa empresa." }
+    ],
+    "enquadramento_esperado": ["CLT Art. 3º", "Súmula 331 TST"],
+    "proximos_passos_esperados_contendo": ["reconhecimento de vínculo", "ctps", "fgts"]
+  },
+  {
+    "id": "caso_02_rescisao_inadimplida",
+    "titulo": "Dispensa sem justa causa sem pagamento de verbas",
+    "descricao_inicial": "Fui demitido sem justa causa há 2 meses e a empresa não pagou minhas verbas rescisórias nem depositou o FGTS e nem entregou a guia do seguro desemprego.",
+    "espera_perguntas_esclarecimento": false,
+    "respostas_simuladas": [],
+    "enquadramento_esperado": ["CLT Art. 477"],
+    "proximos_passos_esperados_contendo": ["multa do artigo 477", "verbas rescisórias", "fgts"]
+  },
+  {
+    "id": "caso_03_horas_extras",
+    "titulo": "Supressão habitual de horas extras",
+    "descricao_inicial": "Trabalhei 3 anos fazendo 2 horas extras diárias que eram pagas todo mês. No mês passado a empresa cortou totalmente o pagamento sem qualquer aviso.",
+    "espera_perguntas_esclarecimento": false,
+    "respostas_simuladas": [],
+    "enquadramento_esperado": ["CLT Art. 59", "Súmula 291 TST"],
+    "proximos_passos_esperados_contendo": ["horas extras", "indenização", "súmula 291"]
+  },
+  {
+    "id": "caso_04_rescisao_indireta",
+    "titulo": "Assédio moral e falta grave do empregador",
+    "descricao_inicial": "Meu chefe direto me humilha constantemente perante os colegas com ofensas e a empresa está há 3 meses sem pagar meu salário e sem recolher FGTS.",
+    "espera_perguntas_esclarecimento": false,
+    "respostas_simuladas": [],
+    "enquadramento_esperado": ["CLT Art. 483"],
+    "proximos_passos_esperados_contendo": ["rescisão indireta", "fgts", "indenização"]
+  }
+]

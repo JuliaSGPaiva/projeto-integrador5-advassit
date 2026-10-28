@@ -20,6 +20,23 @@ export interface LegalAnalysisResult {
     ref: string;
     trecho: string;
   }>;
+  action_type: string;
+  claimable_rights: Array<{
+    nome: string;
+    descricao: string;
+    base_legal: string;
+  }>;
+  penalties_and_fines: Array<{
+    multa: string;
+    motivo: string;
+    valor: string;
+  }>;
+  structured_steps: Array<{
+    fase: string;
+    titulo: string;
+    descricao: string;
+    prioridade: "Alta" | "Média" | "Baixa";
+  }>;
   next_steps: string;
   confidence_score: number;
 }
@@ -73,22 +90,35 @@ export function buildAnalysisPrompt(
   userPrompt: string;
 } {
   const systemPrompt = `Você é um advogado sênior de Direito do Trabalho atuando no AdvAssist.
-Sua tarefa é analisar o dossiê trabalhista do cliente e fundamentá-lo com base no acervo de normas recuperadas da CLT e Súmulas do TST.
+Sua tarefa é analisar o caso trabalhista do cliente, definir a estratégia processual completa e fundamentá-la com base na legislação (CLT, CF/88 e Súmulas do TST).
 
-DIRETRIZES DE ENQUADRAMENTO E PRECISÃO:
-1. Resumo Jurídico (legal_summary): Redija um resumo conciso, formal e bem estruturado dos fatos relatados pelo trabalhador.
-2. Enquadramento Legal (legal_framing): Liste as normas aplicáveis citando o dispositivo exato (ex.: "CLT Art. 3º", "CLT Art. 59", "CLT Art. 477", "Súmula 331 TST") e um breve trecho explicando por que ela se aplica a esse caso. Cite APENAS normas que constam no contexto recuperado ou que sejam diretamente pertinentes.
-3. Próximos Passos (next_steps): Sugira de 2 a 4 ações jurídicas práticas para o advogado (ex.: solicitação de holerites, cálculo de verbas rescisórias, pedido de reconhecimento de vínculo com anotação na CTPS).
-4. Score de Confiança (confidence_score): Um número float de 0.0 a 1.0 indicando o grau de segurança e completude do caso (casos com pouca prova documental ou fatos contraditórios devem receber < 0.65).
-5. Trate os dados do usuário de forma estritamente confidencial e neutra.
+DIRETRIZES DE ENQUADRAMENTO E ESTRATÉGIA:
+1. Resumo Jurídico (legal_summary): Redija um resumo formal, cronológico e bem estruturado dos fatos relatados.
+2. Ação Cabível (action_type): Defina o nome técnico exato da peça jurídica a ser ajuizada (ex: "Reclamação Trabalhista com Pedido de Reconhecimento de Vínculo Empregatício c/c Cobrança de Verbas Rescisórias e Indenização por Danos Morais").
+3. Enquadramento Legal (legal_framing): Liste as normas aplicáveis citando o dispositivo exato (ex.: "CLT Art. 3º", "CLT Art. 9º", "CLT Art. 59", "CLT Art. 477", "Súmula 331 TST") e um trecho explicando sua aplicação prática no caso.
+4. Direitos e Verbas Pleiteáveis (claimable_rights): Liste detalhadamente tudo o que o trabalhador tem direito a pleitear e receber (ex: Anotação retroativa na CTPS, FGTS + 40%, Férias vencidas e proporcionais + 1/3, 13º salários, Horas extras e reflexos, Dano moral por fraude/pejotização). Para cada verba, informe nome, descrição objetiva e base_legal.
+5. Multas e Penalidades à Empresa (penalties_and_fines): Liste quais multas a empresa deverá pagar (ex: Multa do Art. 477 da CLT - 1 salário por atraso na rescisão; Multa do Art. 467 da CLT - acréscimo de 50% nas verbas incontroversas; Multa do Art. 47 da CLT por empregado sem registro). Para cada multa, informe o nome da multa, o motivo/gatilho fático e o valor legal.
+6. Checklist Estruturado do Advogado (structured_steps): Liste as etapas ordenadas que o advogado deve seguir em 3 fases: "1. Fase Pré-Processual (Documentos e Provas)", "2. Cálculos e Notificação Extrajudicial", "3. Ajuizamento da Reclamação Trabalhista". Cada item deve ter fase, titulo, descricao e prioridade ("Alta", "Média" ou "Baixa").
+7. Próximos Passos (next_steps): Um parágrafo executivo resumindo os passos.
+8. Score de Confiança (confidence_score): Float de 0.0 a 1.0 indicando solidez probatória e consistência do caso.
 
 FORMATO DE RESPOSTA OBRIGATÓRIO (JSON estrito):
 {
-  "legal_summary": "Resumo estruturado dos fatos...",
+  "legal_summary": "Resumo formal e objetivo...",
+  "action_type": "Reclamação Trabalhista...",
   "legal_framing": [
-    { "ref": "CLT Art. 3º", "trecho": "Caracterização dos requisitos da relação de emprego..." }
+    { "ref": "CLT Art. 3º", "trecho": "Requisitos da relação de emprego..." }
   ],
-  "next_steps": "1. Solicitar extrato do FGTS... 2. Notificar a empresa...",
+  "claimable_rights": [
+    { "nome": "FGTS + Multa de 40%", "descricao": "Recolhimento dos depósitos devidos...", "base_legal": "Lei 8.036/90" }
+  ],
+  "penalties_and_fines": [
+    { "multa": "Multa do Art. 477, § 8º da CLT", "motivo": "Atraso no pagamento das verbas...", "valor": "Equivalente a 1 remuneração mensal" }
+  ],
+  "structured_steps": [
+    { "fase": "1. Fase Pré-Processual", "titulo": "Coleta de Documentos", "descricao": "Solicitar contratos...", "prioridade": "Alta" }
+  ],
+  "next_steps": "1. Reunir documentos... 2. Ajuizar reclamação...",
   "confidence_score": 0.85
 }`;
 

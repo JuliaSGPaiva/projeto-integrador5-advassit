@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed:kb": "tsx src/backend/services/rag/knowledgeBase.ts",
+    "seed:leis": "tsx src/backend/services/rag/importers/runImport.ts",
     "eval": "tsx tests/eval/runEval.ts"
   },
   "dependencies": {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api } from "@/frontend/lib/api";
-import { HelpCircle, Send, AlertCircle, Sparkles } from "lucide-react";
+import { HelpCircle, Send, AlertCircle, HelpCircle as QuestionIcon } from "lucide-react";
 
 interface QuestionItem {
   order: number;
@@ -32,13 +32,11 @@ export function PerguntasEsclarecimento({
     e.preventDefault();
     setError(null);
 
-    // Formata o payload
     const answersPayload = questions.map((q) => ({
       order: q.order,
       text: (answers[q.order] || "").trim() || "Não soube responder / Não se aplica.",
     }));
 
-    // Verifica se pelo menos uma resposta foi preenchida com substância
     const hasAnyRealAnswer = answersPayload.some(
       (a) => a.text.length > 2 && a.text !== "Não soube responder / Não se aplica."
     );
@@ -65,77 +63,78 @@ export function PerguntasEsclarecimento({
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="glass-panel p-6 sm:p-10 rounded-2xl relative overflow-hidden">
-        {/* Glow ambient */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            Fase de Esclarecimento
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Precisamos de apenas alguns detalhes adicionais
+    <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+      {/* Step Header Bar */}
+      <div className="bg-slate-50 border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500 text-slate-950">
+            PASSO 2 DE 3
+          </span>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            Esclarecimentos Fáticos Adicionais
           </h2>
-          <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-            Para que o advogado tenha todas as informações essenciais da CLT, responda às perguntas pontuais geradas pela nossa IA com base no seu relato inicial.
-          </p>
+        </div>
+        <span className="text-xs font-mono text-slate-500 hidden sm:inline">
+          {questions.length} perguntas geradas
+        </span>
+      </div>
+
+      <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed font-medium">
+          A IA identificou lacunas fáticas no relato inicial. Por favor, forneça as informações abaixo para complementar o enquadramento na CLT:
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/50 border border-red-500/30 flex gap-3 items-center text-red-200 text-sm">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          <div className="p-3.5 rounded bg-red-50 border border-red-200 flex items-center gap-3 text-xs text-red-800 font-semibold">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {questions.map((q) => (
             <div
               key={q.order}
-              className="p-5 rounded-xl bg-slate-900/60 border border-white/10 hover:border-amber-500/30 transition-all duration-200"
+              className="p-4 rounded border border-slate-200 bg-slate-50/50 space-y-2.5"
             >
-              <div className="flex items-start gap-3 mb-3">
-                <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                  {q.order}
+              <div className="flex items-start gap-2.5">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800 shrink-0">
+                  Q{q.order}
                 </span>
-                <label className="text-sm font-semibold text-slate-100 leading-snug">
+                <label className="text-xs font-bold text-slate-900 leading-snug">
                   {q.text}
                 </label>
               </div>
 
               <textarea
                 rows={3}
-                placeholder="Digite sua resposta com o máximo de detalhes que lembrar..."
+                placeholder="Digite os detalhes fáticos correspondentes..."
                 value={answers[q.order] || ""}
                 onChange={(e) => handleAnswerChange(q.order, e.target.value)}
-                className="w-full glass-input px-4 py-2.5 rounded-xl text-sm leading-relaxed"
+                className="w-full sys-input p-3 leading-relaxed"
                 disabled={isSubmitting}
               />
             </div>
           ))}
 
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-400 flex items-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-slate-500 shrink-0" />
-              Se não souber responder com precisão a alguma pergunta, informe o que souber.
-            </p>
-
+          <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+              Responda o máximo que lembrar para maior precisão.
+            </span>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm tracking-wide transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-2.5 rounded bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ml-auto"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  <span>Finalizando análise...</span>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Finalizando Dossiê...</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
-                  <span>Concluir e Enviar Respostas</span>
+                  <span>Concluir Esclarecimentos</span>
+                  <Send className="w-4 h-4 text-amber-400" />
                 </>
               )}
             </button>
@@ -145,3 +144,5 @@ export function PerguntasEsclarecimento({
     </div>
   );
 }
+
+

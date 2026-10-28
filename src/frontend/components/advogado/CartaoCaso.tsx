@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { CaseRecord } from "@/backend/services/supabase/types";
 import {
-  Clock,
   ChevronRight,
   ShieldAlert,
   CheckCircle2,
@@ -17,41 +16,40 @@ interface CartaoCasoProps {
 }
 
 export function CartaoCaso({ item }: CartaoCasoProps) {
-  const getStatusBadge = (status: string) => {
+  const getStatusDot = (status: string) => {
     switch (status) {
       case "ready":
         return {
-          label: "Pronto para Avaliação",
-          icon: CheckCircle2,
-          classes: "bg-emerald-500/15 border-emerald-500/30 text-emerald-300",
+          label: "PRONTO P/ ANÁLISE",
+          dotClass: "bg-emerald-500",
+          badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
         };
       case "pending_clarification":
         return {
-          label: "Aguardando Esclarecimento",
-          icon: HelpCircle,
-          classes: "bg-amber-500/15 border-amber-500/30 text-amber-300",
+          label: "AGUARDANDO CLIENTE",
+          dotClass: "bg-amber-500",
+          badgeClass: "bg-amber-50 text-amber-800 border-amber-200",
         };
       case "low_confidence":
         return {
-          label: "Revisão Manual Necessária",
-          icon: ShieldAlert,
-          classes: "bg-rose-500/15 border-rose-500/30 text-rose-300",
+          label: "REVISÃO MANUAL",
+          dotClass: "bg-rose-500",
+          badgeClass: "bg-rose-50 text-rose-800 border-rose-200",
         };
       default:
         return {
-          label: "Em Processamento",
-          icon: Activity,
-          classes: "bg-sky-500/15 border-sky-500/30 text-sky-300",
+          label: "PROCESSANDO",
+          dotClass: "bg-sky-500",
+          badgeClass: "bg-sky-50 text-sky-800 border-sky-200",
         };
     }
   };
 
-  const badge = getStatusBadge(item.status);
-  const BadgeIcon = badge.icon;
+  const statusInfo = getStatusDot(item.status);
 
   const formattedDate = new Date(item.created_at).toLocaleDateString("pt-BR", {
     day: "2-digit",
-    month: "short",
+    month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -64,76 +62,92 @@ export function CartaoCaso({ item }: CartaoCasoProps) {
   return (
     <Link
       href={`/admin/${item.id}`}
-      className="block glass-panel p-5 sm:p-6 rounded-xl hover:border-amber-500/40 transition-all duration-200 group relative overflow-hidden"
+      className="block bg-white p-4 sm:p-5 rounded-lg border border-slate-200 hover:border-slate-400 hover:shadow-xs transition-all duration-150 group"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Left: Client & Status */}
         <div className="flex items-center gap-3">
-          <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+          <span
+            className={`inline-flex items-center gap-1.5 text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${statusInfo.badgeClass}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}`} />
+            {statusInfo.label}
+          </span>
+
+          <h3 className="text-sm font-extrabold font-heading text-slate-900 group-hover:text-amber-700 transition-colors">
             {item.client_name}
           </h3>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.classes}`}
-          >
-            <BadgeIcon className="w-3.5 h-3.5" />
-            {badge.label}
-          </span>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="inline-flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
+        {/* Right: Date & Access */}
+        <div className="flex items-center gap-4 text-xs font-mono text-slate-500">
+          <span className="flex items-center gap-1 text-[11px]">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
             {formattedDate}
+          </span>
+
+          <span className="text-slate-900 group-hover:translate-x-0.5 transition-transform inline-flex items-center text-xs font-bold">
+            Abrir <ChevronRight className="w-4 h-4 ml-0.5 text-amber-600" />
           </span>
         </div>
       </div>
 
-      {/* Relato Preliminar */}
-      <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 leading-relaxed mb-4">
+      {/* Relato Preliminar / Resumo */}
+      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed my-2.5 font-medium">
         {item.legal_summary || item.initial_description}
       </p>
 
       {/* Tags de Enquadramento Legal e Score */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/5">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
         <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase font-bold text-slate-400">CLT/TST:</span>
           {item.legal_framing && item.legal_framing.length > 0 ? (
             item.legal_framing.map((f, i) => (
               <span
                 key={i}
-                className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300"
+                className="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-700"
               >
                 {f.ref}
               </span>
             ))
           ) : (
-            <span className="text-xs text-slate-400 italic">
-              Aguardando enquadramento da IA
+            <span className="text-[11px] text-slate-400 italic">
+              Pendente
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3 ml-auto">
-          {confidencePercent !== null && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-slate-400">Confiança IA:</span>
-              <span
-                className={`font-semibold font-mono ${
+        {confidencePercent !== null && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Score IA:</span>
+            <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200">
+              <div
+                className={`h-full rounded-full ${
                   confidencePercent >= 75
-                    ? "text-emerald-400"
+                    ? "bg-emerald-600"
                     : confidencePercent >= 55
-                    ? "text-amber-400"
-                    : "text-rose-400"
+                    ? "bg-amber-600"
+                    : "bg-rose-600"
                 }`}
-              >
-                {confidencePercent}%
-              </span>
+                style={{ width: `${confidencePercent}%` }}
+              />
             </div>
-          )}
-
-          <span className="text-amber-400 group-hover:translate-x-1 transition-transform inline-flex items-center text-xs font-semibold">
-            Ver Caso <ChevronRight className="w-4 h-4 ml-0.5" />
-          </span>
-        </div>
+            <span
+              className={`font-mono font-bold text-xs ${
+                confidencePercent >= 75
+                  ? "text-emerald-700"
+                  : confidencePercent >= 55
+                  ? "text-amber-700"
+                  : "text-rose-700"
+              }`}
+            >
+              {confidencePercent}%
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );
 }
+
+

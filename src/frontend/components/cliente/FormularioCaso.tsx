@@ -9,7 +9,6 @@ import {
   User,
   Mail,
   Phone,
-  Sparkles,
   AlertCircle,
   ShieldAlert,
   ArrowRight,
@@ -88,49 +87,47 @@ export function FormularioCaso({ onCaseCreated }: FormularioCasoProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="glass-panel p-6 sm:p-10 rounded-2xl relative overflow-hidden">
-        {/* Glow ambient background inside card */}
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="mb-8 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            Triagem Inteligente Trabalhista
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Conte-nos o que aconteceu no seu trabalho
-          </h1>
-          <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-            Nossa inteligência jurídica analisa seu relato em segundos, identifica direitos da CLT cabíveis e organiza seu caso para avaliação de um advogado.
-          </p>
+    <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+      {/* Step Header Bar */}
+      <div className="bg-slate-50 border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+            PASSO 1 DE 3
+          </span>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            Formulário de Atendimento e Fatos
+          </h2>
         </div>
+        <span className="text-xs font-medium text-slate-500 hidden sm:inline">
+          Campos marcados com * são obrigatórios
+        </span>
+      </div>
 
-        {/* Disclaimer / US4: Aviso de automação */}
-        <div className="mb-6 p-4 rounded-xl bg-slate-900/80 border border-amber-500/20 flex gap-3 items-start">
-          <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-300 leading-relaxed">
-            <strong className="text-amber-300">Atenção:</strong> Este é um sistema automatizado de triagem fática preliminar por inteligência artificial. Suas informações serão organizadas e encaminhadas a um advogado especializado para análise formal.
-          </div>
+      <div className="p-6 sm:p-8 space-y-6">
+        {/* US4 Disclaimer */}
+        <div className="p-3.5 rounded bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs text-amber-900 font-medium">
+          <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+          <span>
+            <strong>Aviso de Triagem Automatizada:</strong> As informações inseridas serão catalogadas via IA e fundamentadas na CLT antes do envio ao advogado responsável.
+          </span>
         </div>
 
         {serverError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/50 border border-red-500/30 flex gap-3 items-center text-red-200 text-sm">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          <div className="p-3.5 rounded bg-red-50 border border-red-200 flex items-center gap-3 text-xs text-red-800 font-semibold">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
             <span>{serverError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Identificação do Cliente */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                Nome Completo *
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Nome Completo do Trabalhador *
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="text"
                   placeholder="Ex.: Carlos Eduardo da Silva"
@@ -138,23 +135,23 @@ export function FormularioCaso({ onCaseCreated }: FormularioCasoProps) {
                   onChange={(e) =>
                     setFormData({ ...formData, client_name: e.target.value })
                   }
-                  className={`w-full glass-input pl-10 pr-4 py-2.5 rounded-xl text-sm ${
-                    errors.client_name ? "border-red-500/60" : ""
+                  className={`w-full sys-input pl-9 pr-3 py-2.5 ${
+                    errors.client_name ? "border-red-500" : ""
                   }`}
                   disabled={isSubmitting}
                 />
               </div>
               {errors.client_name && (
-                <p className="mt-1 text-xs text-red-400">{errors.client_name}</p>
+                <p className="mt-1 text-xs text-red-600 font-medium">{errors.client_name}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                E-mail para Contato *
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                E-mail Principal *
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="email"
                   placeholder="seuemail@exemplo.com"
@@ -162,23 +159,23 @@ export function FormularioCaso({ onCaseCreated }: FormularioCasoProps) {
                   onChange={(e) =>
                     setFormData({ ...formData, client_email: e.target.value })
                   }
-                  className={`w-full glass-input pl-10 pr-4 py-2.5 rounded-xl text-sm ${
-                    errors.client_email ? "border-red-500/60" : ""
+                  className={`w-full sys-input pl-9 pr-3 py-2.5 ${
+                    errors.client_email ? "border-red-500" : ""
                   }`}
                   disabled={isSubmitting}
                 />
               </div>
               {errors.client_email && (
-                <p className="mt-1 text-xs text-red-400">{errors.client_email}</p>
+                <p className="mt-1 text-xs text-red-600 font-medium">{errors.client_email}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                WhatsApp / Telefone *
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                WhatsApp / Telefone com DDD *
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="tel"
                   placeholder="(11) 98765-4321"
@@ -186,69 +183,69 @@ export function FormularioCaso({ onCaseCreated }: FormularioCasoProps) {
                   onChange={(e) =>
                     setFormData({ ...formData, client_phone: e.target.value })
                   }
-                  className={`w-full glass-input pl-10 pr-4 py-2.5 rounded-xl text-sm ${
-                    errors.client_phone ? "border-red-500/60" : ""
+                  className={`w-full sys-input pl-9 pr-3 py-2.5 ${
+                    errors.client_phone ? "border-red-500" : ""
                   }`}
                   disabled={isSubmitting}
                 />
               </div>
               {errors.client_phone && (
-                <p className="mt-1 text-xs text-red-400">{errors.client_phone}</p>
+                <p className="mt-1 text-xs text-red-600 font-medium">{errors.client_phone}</p>
               )}
             </div>
           </div>
 
           {/* Relato do Caso */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Descreva sua situação de trabalho *
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Descrição dos Fatos Trabalhistas *
               </label>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] font-mono text-slate-500">
                 {formData.initial_description.length} caracteres
               </span>
             </div>
             <div className="relative">
-              <FileText className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <textarea
                 rows={6}
-                placeholder="Exemplo: Fui contratado como PJ há 1 ano para trabalhar na área de tecnologia, mas tinha horário fixo de entrada e saída (8h às 18h), recebia ordens diretas do gerente e não podia enviar outra pessoa. Fui dispensado e não recebi férias, 13º nem FGTS..."
+                placeholder="Descreva o caso com detalhes: periódo trabalhado, se possuía carteira assinada ou era contratado como PJ, horários cumpridos, motivo do desligamento e verbas que não foram pagas..."
                 value={formData.initial_description}
                 onChange={(e) =>
                   setFormData({ ...formData, initial_description: e.target.value })
                 }
-                className={`w-full glass-input pl-10 pr-4 py-3 rounded-xl text-sm leading-relaxed ${
-                  errors.initial_description ? "border-red-500/60" : ""
+                className={`w-full sys-input pl-9 pr-3 py-2.5 leading-relaxed ${
+                  errors.initial_description ? "border-red-500" : ""
                 }`}
                 disabled={isSubmitting}
               />
             </div>
             {errors.initial_description && (
-              <p className="mt-1 text-xs text-red-400">
+              <p className="mt-1 text-xs text-red-600 font-medium">
                 {errors.initial_description}
               </p>
             )}
-            <p className="mt-2 text-xs text-slate-400">
-              💡 <em>Dica:</em> Mencione detalhes como período trabalhado, funções, horários, se era PJ ou carteira assinada e valores pendentes.
-            </p>
           </div>
 
-          {/* Botão de Envio */}
-          <div className="pt-2">
+          {/* Action Footer */}
+          <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+              Seu relato será avaliado em tempo real pela IA.
+            </span>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto sm:min-w-[240px] px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm tracking-wide transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group cursor-pointer"
+              className="w-full sm:w-auto px-6 py-2.5 rounded bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ml-auto"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  <span>Analisando com IA...</span>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Processando Triagem...</span>
                 </>
               ) : (
                 <>
-                  <span>Enviar para Triagem</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  <span>Prosseguir para Análise</span>
+                  <ArrowRight className="w-4 h-4 text-amber-400" />
                 </>
               )}
             </button>
@@ -258,3 +255,5 @@ export function FormularioCaso({ onCaseCreated }: FormularioCasoProps) {
     </div>
   );
 }
+
+

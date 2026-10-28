@@ -9,6 +9,35 @@ export interface LegalFramingItem {
   trecho: string;
 }
 
+export interface ClaimableRightItem {
+  nome: string;
+  descricao: string;
+  base_legal: string;
+}
+
+export interface PenaltyItem {
+  multa: string;
+  motivo: string;
+  valor: string;
+}
+
+export interface StructuredStepItem {
+  fase: string;
+  titulo: string;
+  descricao: string;
+  prioridade: "Alta" | "Média" | "Baixa";
+}
+
+export interface DetailedDiagnostic {
+  articles: LegalFramingItem[];
+  action_type: string;
+  claimable_rights: ClaimableRightItem[];
+  penalties_and_fines: PenaltyItem[];
+  steps?: StructuredStepItem[];
+}
+
+export type LegalFramingData = LegalFramingItem[] | DetailedDiagnostic;
+
 export interface CaseRecord {
   id: string;
   client_name: string;
@@ -17,7 +46,7 @@ export interface CaseRecord {
   initial_description: string;
   status: CaseStatus;
   legal_summary: string | null;
-  legal_framing: LegalFramingItem[] | null;
+  legal_framing: LegalFramingData | null;
   next_steps: string | null;
   confidence_score: number | null;
   created_at: string;

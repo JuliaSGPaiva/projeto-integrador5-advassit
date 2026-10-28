@@ -81,12 +81,20 @@ export async function createCaseService(input: CreateCaseInput): Promise<CreateC
 
   const finalStatus = analysis.confidence_score < 0.65 ? "low_confidence" : "ready";
 
+  const framingData = {
+    articles: analysis.legal_framing,
+    action_type: analysis.action_type,
+    claimable_rights: analysis.claimable_rights,
+    penalties_and_fines: analysis.penalties_and_fines,
+    steps: analysis.structured_steps,
+  };
+
   await supabase
     .from("cases")
     .update({
       status: finalStatus,
       legal_summary: analysis.legal_summary,
-      legal_framing: analysis.legal_framing,
+      legal_framing: framingData,
       next_steps: analysis.next_steps,
       confidence_score: analysis.confidence_score,
       updated_at: new Date().toISOString(),
@@ -152,12 +160,20 @@ export async function clarifyCaseService(
 
   const finalStatus = analysis.confidence_score < 0.65 ? "low_confidence" : "ready";
 
+  const framingData = {
+    articles: analysis.legal_framing,
+    action_type: analysis.action_type,
+    claimable_rights: analysis.claimable_rights,
+    penalties_and_fines: analysis.penalties_and_fines,
+    steps: analysis.structured_steps,
+  };
+
   await supabase
     .from("cases")
     .update({
       status: finalStatus,
       legal_summary: analysis.legal_summary,
-      legal_framing: analysis.legal_framing,
+      legal_framing: framingData,
       next_steps: analysis.next_steps,
       confidence_score: analysis.confidence_score,
       updated_at: new Date().toISOString(),

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CaseRecord } from "@/backend/services/supabase/types";
+import { CaseRecord, LegalFramingItem } from "@/backend/services/supabase/types";
 import {
   ChevronRight,
   ShieldAlert,
@@ -59,6 +59,12 @@ export function CartaoCaso({ item }: CartaoCasoProps) {
     ? Math.round(Number(item.confidence_score) * 100)
     : null;
 
+  const articles: LegalFramingItem[] = Array.isArray(item.legal_framing)
+    ? item.legal_framing
+    : Array.isArray(item.legal_framing?.articles)
+    ? item.legal_framing.articles
+    : [];
+
   return (
     <Link
       href={`/admin/${item.id}`}
@@ -101,8 +107,8 @@ export function CartaoCaso({ item }: CartaoCasoProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] uppercase font-bold text-slate-400">CLT/TST:</span>
-          {item.legal_framing && item.legal_framing.length > 0 ? (
-            item.legal_framing.map((f, i) => (
+          {articles.length > 0 ? (
+            articles.map((f, i) => (
               <span
                 key={i}
                 className="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 text-slate-700"

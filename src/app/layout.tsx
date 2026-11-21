@@ -82,7 +82,7 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2 font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ambiente Homologado MVP • Groq LLaMA 3.3 (70B) & RAG Trabalhista (CLT/TST)</span>
+              <span>Ambiente Homologado MVP • Groq gpt-oss-120b & RAG Trabalhista (CLT/TST)</span>
             </div>
             <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
               <UserCheck className="w-3 h-3 text-emerald-400" />

@@ -42,7 +42,11 @@ const pct = (x: number | null | undefined, digits = 0) =>
   typeof x === "number" ? `${(x * 100).toFixed(digits)}%` : "—";
 
 const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  new Date(iso).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo", // igual no servidor (UTC) e no navegador: evita erro de hidratação
+  });
 
 const STATUS_STYLE: Record<CitationStatus, { label: string; chip: string; bar: string }> = {
   ancorada: { label: "Ancorada no RAG", chip: "bg-emerald-50 text-emerald-800 border-emerald-200", bar: "bg-emerald-600" },

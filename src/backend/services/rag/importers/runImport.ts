@@ -3,6 +3,7 @@ import path from "path";
 import { getSupabaseServerClient } from "../../supabase/client";
 import { generateEmbedding } from "../embeddings";
 import { SEED_LEGAL_DOCUMENTS } from "../seedData";
+import { PRIORITY_CLT_ARTICLES } from "../knowledgeCatalog";
 import {
   chunkLawByArticle,
   fetchLawFromGitHub,
@@ -30,20 +31,6 @@ function loadEnv() {
 }
 
 loadEnv();
-
-/**
- * Artigos da CLT de maior relevância prática para triagem trabalhista inicial
- * (relação de emprego, vínculo, PJ, terceirização, jornada, horas extras, rescisão, FGTS, justa causa, rescisão indireta).
- */
-const PRIORITY_CLT_ARTICLES = new Set([
-  "1", "2", "3", "4", "7", "8", "9",
-  "11", "29", "47",
-  "58", "59", "59-A", "59-B", "61", "66", "71",
-  "130", "134", "137",
-  "442", "442-B", "443", "444", "448", "456-A", "457", "458", "461",
-  "468", "477", "477-A", "479", "482", "483", "484", "487",
-  "791-A", "818"
-]);
 
 export async function runImport(): Promise<void> {
   console.log("\n=======================================================");

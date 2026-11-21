@@ -129,8 +129,10 @@ O desenvolvimento segue uma abordagem iterativa, alinhada aos três checkpoints 
 
 * **Harness de Avaliação (Eval) da IA:**
   ```bash
-  npx tsx tests/eval/runEval.ts
+  npm run eval            # 15 casos (11 trabalhistas + 4 adversariais) + ablação do esclarecimento
+  npm run eval -- --rapido
   ```
+  O resultado fica em `tests/eval/report.json` e é exibido na página **`/admin/eval`** (relevância, alucinação, ancoragem no RAG, robustez, esclarecimento, ataques resistidos, tokens e latência). Detalhes das métricas na [Documentação Técnica, seção 8](AdvAssist_Documentacao_Tecnica.md).
 
 ---
 

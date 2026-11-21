@@ -4,11 +4,18 @@
  */
 
 const HF_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2";
-const HF_API_URL = `https://api-inference.huggingface.co/pipeline/feature-extraction/${HF_MODEL}`;
+// O endpoint antigo (api-inference.huggingface.co) foi desativado pelo Hugging Face.
+const HF_API_URL = `https://router.huggingface.co/hf-inference/models/${HF_MODEL}/pipeline/feature-extraction`;
 
 /**
  * Gera um embedding de 384 dimensões para um texto fornecido.
  */
+/**
+ * Contadores de qual caminho gerou cada embedding (Hugging Face real x fallback por hash).
+ * Lido pelo harness de eval: com embeddings de fallback a busca vetorial perde o sentido semântico.
+ */
+export const embeddingStats = { huggingface: 0, fallback: 0, lastError: "" };
+
 export async function generateEmbedding(text: string): Promise<number[]> {
   const sanitizedText = text.replace(/\n+/g, " ").trim();
   if (!sanitizedText) {
@@ -38,6 +45,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       console.warn(
         `[Embeddings] Aviso: Hugging Face API retornou ${response.status}: ${errorBody}. Usando fallback determinístico.`
       );
+      embeddingStats.fallback++;
+      embeddingStats.lastError = `HTTP ${response.status}`;
       return generateDeterministicFallbackEmbedding(sanitizedText);
     }
 
@@ -54,6 +63,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     }
 
     if (vector.length === 384) {
+      embeddingStats.huggingface++;
       return vector;
     }
 
@@ -61,11 +71,14 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     console.warn(
       `[Embeddings] Vetor retornado tem dimensão ${vector.length}, ajustando para 384.`
     );
+    embeddingStats.huggingface++;
     return padOrTruncateVector(vector, 384);
   } catch (error) {
     console.warn(
       `[Embeddings] Falha na requisição ao Hugging Face: ${error}. Ativando fallback determinístico de 384 dimensões.`
     );
+    embeddingStats.fallback++;
+    embeddingStats.lastError = String(error);
     return generateDeterministicFallbackEmbedding(sanitizedText);
   }
 }

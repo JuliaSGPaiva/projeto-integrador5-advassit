@@ -5,13 +5,80 @@ import {
   LegalAnalysisResult,
   SufficiencyResult,
 } from "./promptTemplates";
-import { retrieveRelevantLegalDocuments } from "../rag/retrieve";
+import { retrieveRelevantLegalDocumentsDetailed, RetrievalMode } from "../rag/retrieve";
+
+/**
+ * Rastro de execução de uma chamada de IA. Não altera o comportamento do produto:
+ * serve para o harness de eval distinguir resposta do LLM x fallback, medir tokens e latência.
+ */
+export interface AiCallTrace {
+  source: "llm" | "fallback";
+  model: string;
+  latency_ms: number;
+  error?: string;
+  usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  /** Campos que o LLM deixou vazios e foram preenchidos com texto padrão. */
+  defaults_filled: string[];
+  retrieval?: {
+    mode: RetrievalMode;
+    fallback_reason?: string;
+    docs: Array<{ source: string; similarity: number }>;
+  };
+}
+
+/**
+ * Confiança atribuída a respostas geradas sem o LLM. Fica abaixo do limiar de 0.65 usado em
+ * casesService, então o caso vai para "low_confidence" (revisão humana) em vez de "ready".
+ */
+export const FALLBACK_CONFIDENCE = 0.4;
+
+/**
+ * O Groq devolve `json_validate_failed` quando o modelo responde em texto livre em vez de JSON,
+ * o que acontece tipicamente quando ele RECUSA o pedido (ex.: prompt injection).
+ */
+export function isModelRefusal(err: unknown): boolean {
+  const text = String(err);
+  // Resposta truncada por limite de tokens também gera json_validate_failed, mas não é recusa.
+  if (/max(imum)? (completion )?tokens/i.test(text)) return false;
+  return /sorry|can.?t (comply|help)|cannot (comply|help)|não posso|não consigo ajudar/i.test(text);
+}
+
+function newTrace(): AiCallTrace {
+  return { source: "llm", model: DEFAULT_GROQ_MODEL, latency_ms: 0, defaults_filled: [] };
+}
+
+function readUsage(completion: { usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null }) {
+  const u = completion.usage;
+  if (!u) return undefined;
+  return {
+    prompt_tokens: u.prompt_tokens ?? 0,
+    completion_tokens: u.completion_tokens ?? 0,
+    total_tokens: u.total_tokens ?? 0,
+  };
+}
 
 /**
  * Avalia se o relato inicial do cliente é suficiente ou necessita de até 3 perguntas de esclarecimento.
  */
 export async function evaluateSufficiency(
   initialDescription: string
+): Promise<SufficiencyResult> {
+  return (await evaluateSufficiencyDetailed(initialDescription)).result;
+}
+
+export async function evaluateSufficiencyDetailed(
+  initialDescription: string
+): Promise<{ result: SufficiencyResult; trace: AiCallTrace }> {
+  const trace = newTrace();
+  const started = Date.now();
+  const result = await runSufficiency(initialDescription, trace);
+  trace.latency_ms = Date.now() - started;
+  return { result, trace };
+}
+
+async function runSufficiency(
+  initialDescription: string,
+  trace: AiCallTrace
 ): Promise<SufficiencyResult> {
   const { systemPrompt, userPrompt } = buildSufficiencyPrompt(initialDescription);
 
@@ -26,6 +93,7 @@ export async function evaluateSufficiency(
       response_format: { type: "json_object" },
       temperature: 0.1,
     });
+    trace.usage = readUsage(completion);
 
     const content = completion.choices[0]?.message?.content;
     if (!content) {
@@ -44,8 +112,25 @@ export async function evaluateSufficiency(
     };
   } catch (err) {
     console.warn(`[ClarificationEngine] Aviso ao chamar Groq: ${err}. Utilizando heurística de fallback.`);
+    trace.source = "fallback";
+    trace.error = String(err);
+    if (isModelRefusal(err)) return refusalSufficiency();
     return fallbackSufficiencyHeuristic(initialDescription);
   }
+}
+
+/**
+ * Quando o modelo recusa o relato (provável tentativa de manipulação ou conteúdo fora do tema),
+ * não aceitamos o relato: pedimos ao cliente que descreva a situação de trabalho.
+ */
+export function refusalSufficiency(): SufficiencyResult {
+  return {
+    is_sufficient: false,
+    questions: [
+      { order: 1, text: "Pode descrever, com suas palavras, qual é o problema que você enfrenta no trabalho?" },
+      { order: 2, text: "Qual é ou era o seu vínculo com a empresa (carteira assinada, PJ, autônomo) e por quanto tempo?" },
+    ],
+  };
 }
 
 /**
@@ -93,6 +178,27 @@ export async function generateLegalAnalysis(
   initialDescription: string,
   clarifications: Array<{ question: string; answer: string }> = []
 ): Promise<LegalAnalysisResult> {
+  return (await generateLegalAnalysisDetailed(clientName, initialDescription, clarifications)).result;
+}
+
+export async function generateLegalAnalysisDetailed(
+  clientName: string,
+  initialDescription: string,
+  clarifications: Array<{ question: string; answer: string }> = []
+): Promise<{ result: LegalAnalysisResult; trace: AiCallTrace }> {
+  const trace = newTrace();
+  const started = Date.now();
+  const result = await runLegalAnalysis(clientName, initialDescription, clarifications, trace);
+  trace.latency_ms = Date.now() - started;
+  return { result, trace };
+}
+
+async function runLegalAnalysis(
+  clientName: string,
+  initialDescription: string,
+  clarifications: Array<{ question: string; answer: string }>,
+  trace: AiCallTrace
+): Promise<LegalAnalysisResult> {
   // 1. Monta a query para o RAG
   const queryParts = [initialDescription];
   for (const c of clarifications) {
@@ -101,7 +207,13 @@ export async function generateLegalAnalysis(
   const fullQuery = queryParts.join(" ");
 
   // 2. Recupera normas relevantes
-  const retrievedDocs = await retrieveRelevantLegalDocuments(fullQuery, 0.2, 4);
+  const retrieval = await retrieveRelevantLegalDocumentsDetailed(fullQuery, 0.2, 4);
+  const retrievedDocs = retrieval.docs;
+  trace.retrieval = {
+    mode: retrieval.mode,
+    fallback_reason: retrieval.fallbackReason,
+    docs: retrievedDocs.map((d) => ({ source: d.source, similarity: d.similarity })),
+  };
 
   // 3. Constrói prompts
   const { systemPrompt, userPrompt } = buildAnalysisPrompt(
@@ -123,12 +235,44 @@ export async function generateLegalAnalysis(
       temperature: 0.1,
     });
 
+    trace.usage = readUsage(completion);
+
     const content = completion.choices[0]?.message?.content;
     if (!content) {
       throw new Error("Resposta vazia retornada pelo modelo.");
     }
 
     const parsed = JSON.parse(content) as Partial<LegalAnalysisResult>;
+
+    const isEmptyList = (v: unknown) => !Array.isArray(v) || v.length === 0;
+    if (isEmptyList(parsed.legal_framing)) trace.defaults_filled.push("legal_framing");
+    if (isEmptyList(parsed.claimable_rights)) trace.defaults_filled.push("claimable_rights");
+    if (isEmptyList(parsed.penalties_and_fines)) trace.defaults_filled.push("penalties_and_fines");
+    if (isEmptyList(parsed.structured_steps)) trace.defaults_filled.push("structured_steps");
+    if (!parsed.legal_summary) trace.defaults_filled.push("legal_summary");
+    if (!parsed.next_steps) trace.defaults_filled.push("next_steps");
+    if (typeof parsed.confidence_score !== "number") trace.defaults_filled.push("confidence_score");
+
+    // Relato fora do escopo trabalhista: o modelo devolve enquadramento vazio e confiança baixa.
+    // Não preenchemos com o conteúdo padrão (que é específico de pejotização).
+    const outOfScope =
+      Array.isArray(parsed.legal_framing) &&
+      parsed.legal_framing.length === 0 &&
+      typeof parsed.confidence_score === "number" &&
+      parsed.confidence_score <= 0.3;
+    if (outOfScope) {
+      trace.defaults_filled = [];
+      return {
+        legal_summary: parsed.legal_summary || "Relato fora do escopo trabalhista.",
+        action_type: parsed.action_type || "Fora do escopo trabalhista",
+        legal_framing: [],
+        claimable_rights: Array.isArray(parsed.claimable_rights) ? parsed.claimable_rights : [],
+        penalties_and_fines: Array.isArray(parsed.penalties_and_fines) ? parsed.penalties_and_fines : [],
+        structured_steps: Array.isArray(parsed.structured_steps) ? parsed.structured_steps : [],
+        next_steps: parsed.next_steps || "Encaminhar para revisão humana.",
+        confidence_score: Math.max(0, Math.min(1, parsed.confidence_score ?? 0)),
+      };
+    }
 
     const legalFraming = Array.isArray(parsed.legal_framing) && parsed.legal_framing.length > 0
       ? parsed.legal_framing
@@ -223,11 +367,39 @@ export async function generateLegalAnalysis(
     };
   } catch (err) {
     console.warn(`[ClarificationEngine] Falha ao chamar Groq para análise: ${err}. Usando fallback sintético.`);
+    trace.source = "fallback";
+    trace.error = String(err);
+    if (isModelRefusal(err)) return refusalAnalysis();
     return fallbackAnalysisHeuristic(initialDescription, retrievedDocs);
   }
 }
 
-function fallbackAnalysisHeuristic(
+/**
+ * Resposta segura quando o modelo recusa o relato. Não reaproveita o texto do cliente
+ * (que pode conter instruções maliciosas) e manda o caso para revisão humana.
+ */
+export function refusalAnalysis(): LegalAnalysisResult {
+  return {
+    legal_summary:
+      "A IA não gerou a análise automática porque o relato contém instruções ou conteúdo fora do escopo da triagem trabalhista. O relato original está no dossiê e deve ser lido por um advogado.",
+    action_type: "Revisão humana necessária",
+    legal_framing: [],
+    claimable_rights: [],
+    penalties_and_fines: [],
+    structured_steps: [
+      {
+        fase: "1. Fase Pré-Processual (Documentos e Provas)",
+        titulo: "Revisão manual do relato",
+        descricao: "Ler o relato original e, se houver demanda trabalhista, contatar o cliente para obter os fatos.",
+        prioridade: "Alta",
+      },
+    ],
+    next_steps: "Revisão humana do relato antes de qualquer contato com o cliente.",
+    confidence_score: 0.1,
+  };
+}
+
+export function fallbackAnalysisHeuristic(
   initialDescription: string,
   retrievedDocs: Array<{ source: string; content: string }>
 ): LegalAnalysisResult {
@@ -265,7 +437,8 @@ function fallbackAnalysisHeuristic(
   }
 
   return {
-    legal_summary: `Caso envolvendo demanda trabalhista relatada: "${initialDescription.slice(0, 200)}...". Requer avaliação probatória da rotina laboral e verificação de haveres rescisórios.`,
+    legal_summary:
+      "Análise preliminar gerada por heurística local, pois o modelo de linguagem não estava disponível. Requer revisão humana: o relato original está no dossiê do caso.",
     action_type: text.includes("pj")
       ? "Reclamação Trabalhista de Reconhecimento de Vínculo Empregatício c/c Cobrança de Verbas Rescisórias e Danos Morais"
       : "Reclamação Trabalhista com Pedido de Rescisão Indireta e Pagamento de Verbas Contratuais",
@@ -331,6 +504,6 @@ function fallbackAnalysisHeuristic(
     ],
     next_steps:
       "1. Coleta de comprovantes de pagamento e registros de comunicação.\n2. Cálculo discriminado das verbas pleiteadas.\n3. Elaboração de notificação extrajudicial ou petição inicial.",
-    confidence_score: 0.85,
+    confidence_score: FALLBACK_CONFIDENCE,
   };
 }

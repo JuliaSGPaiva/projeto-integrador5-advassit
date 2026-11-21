@@ -18,8 +18,30 @@ export async function retrieveRelevantLegalDocuments(
   matchThreshold = 0.2,
   matchCount = 3
 ): Promise<RetrievedDocument[]> {
+  const { docs } = await retrieveRelevantLegalDocumentsDetailed(query, matchThreshold, matchCount);
+  return docs;
+}
+
+export type RetrievalMode = "vector" | "keyword_fallback" | "empty_query";
+
+export interface RetrievalOutcome {
+  docs: RetrievedDocument[];
+  /** Caminho efetivamente usado: busca vetorial (pgvector) ou fallback por palavras-chave. */
+  mode: RetrievalMode;
+  fallbackReason?: string;
+}
+
+/**
+ * Mesma busca de `retrieveRelevantLegalDocuments`, mas informa qual caminho foi usado.
+ * Usado pelo harness de eval para não confundir o fallback local com o RAG real.
+ */
+export async function retrieveRelevantLegalDocumentsDetailed(
+  query: string,
+  matchThreshold = 0.2,
+  matchCount = 3
+): Promise<RetrievalOutcome> {
   if (!query || query.trim().length === 0) {
-    return [];
+    return { docs: [], mode: "empty_query" };
   }
 
   try {
@@ -36,23 +58,38 @@ export async function retrieveRelevantLegalDocuments(
       console.warn(
         `[RAG Retrieve] Aviso ao chamar RPC match_legal_documents: ${error.message}. Tentando fallback de texto.`
       );
-      return fallbackKeywordRetrieval(query, matchCount);
+      return {
+        docs: fallbackKeywordRetrieval(query, matchCount),
+        mode: "keyword_fallback",
+        fallbackReason: `RPC: ${error.message}`,
+      };
     }
 
     if (data && Array.isArray(data) && data.length > 0) {
-      return data.map((item: LegalDocumentRecord) => ({
-        id: item.id,
-        source: item.source,
-        content: item.content,
-        similarity: item.similarity ?? 1.0,
-      }));
+      return {
+        docs: data.map((item: LegalDocumentRecord) => ({
+          id: item.id,
+          source: item.source,
+          content: item.content,
+          similarity: item.similarity ?? 1.0,
+        })),
+        mode: "vector",
+      };
     }
 
     // Se a busca vetorial não encontrou registros suficientes (ex: base vazia)
-    return fallbackKeywordRetrieval(query, matchCount);
+    return {
+      docs: fallbackKeywordRetrieval(query, matchCount),
+      mode: "keyword_fallback",
+      fallbackReason: "Busca vetorial sem resultados acima do limiar",
+    };
   } catch (err) {
     console.warn(`[RAG Retrieve] Exceção na busca vetorial: ${err}. Usando fallback.`);
-    return fallbackKeywordRetrieval(query, matchCount);
+    return {
+      docs: fallbackKeywordRetrieval(query, matchCount),
+      mode: "keyword_fallback",
+      fallbackReason: String(err),
+    };
   }
 }
 

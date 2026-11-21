@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
-import { Scale, ShieldCheck, FileSpreadsheet, UserCheck } from "lucide-react";
+import { Scale, ShieldCheck, FileSpreadsheet, UserCheck, FlaskConical } from "lucide-react";
 import "./globals.css";
 
 const inter = Inter({
@@ -65,6 +65,13 @@ export default function RootLayout({
               >
                 <FileSpreadsheet className="w-4 h-4 text-slate-950" />
                 <span>Painel de Casos</span>
+              </Link>
+              <Link
+                href="/admin/eval"
+                className="flex items-center gap-2 text-xs sm:text-sm font-semibold px-3.5 py-1.5 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <FlaskConical className="w-4 h-4" />
+                <span>Avaliação da IA</span>
               </Link>
             </nav>
           </div>
